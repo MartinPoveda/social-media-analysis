@@ -12,7 +12,7 @@ DATA_PATH = f'{os.getcwd()}/data'
 
 
 
-def read_post_file(file_name, data_path=DATA_PATH):
+def read_file(file_name, date_col=None, data_path=DATA_PATH):
     """Read csv file containing a Timestamp column and return the appropriate DataFrame with the time in index.
     Note the data returned is sorted by date.
 
@@ -30,7 +30,7 @@ def read_post_file(file_name, data_path=DATA_PATH):
     pandas DataFrame
         Data uploaded with the time in index (posts are sorted by date).
     """
-    df = pd.read_csv(f'{data_path}/{file_name}', index_col='Timestamp', parse_dates=True, date_parser=lambda x: pd.to_datetime(x, format='%Y-%m-%d %H:%M'))
+    df = pd.read_csv(f'{data_path}/{file_name}', index_col=date_col, parse_dates=True, date_parser=lambda x: pd.to_datetime(x, format='%Y-%m-%d %H:%M'))
     df.sort_index(inplace=True)
     return df
 

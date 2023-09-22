@@ -33,7 +33,7 @@ def _generic_figure(figure_type=None):
 
 
 
-def _generic_plot(x,y, plot_type=None):
+def _generic_plot(x,y, label=None, plot_type=None):
     """Create a plot for standard use cases.
     The different type of plots are:
      - bar plot
@@ -46,17 +46,20 @@ def _generic_plot(x,y, plot_type=None):
     plot_type : 'str default: None'
         Type of the plot
 
+    label : 'str default: None'
+        Label of the plot
+
     """
     if plot_type=='bar':
-        plt.bar(x, y)
+        plt.bar(x, y, label=label)
     if plot_type=='plot':
-        plt.plot(x, y, color='red')
+        plt.plot(x, y)
     if plot_type=='point':
-        plt.plot(x,y,'.')
+        plt.plot(x,y,'.', label=label)
 
 
 
-def _generic_graph(x,y, title_name, graph_type=None, save_img_path=None, moving_average=None, xticks_rotation=0):
+def _generic_graph(x,y, title_name, graph_type=None, save_img_path=None, moving_average=None, xticks_rotation=0, label=None):
     """Create a graph for standard use cases.
     The different type of graphs are:
      - temporal
@@ -85,13 +88,14 @@ def _generic_graph(x,y, title_name, graph_type=None, save_img_path=None, moving_
     xticks_rotation : 'float default: 0'
         Degree (in °) of the rotation of x ticks
 
+    label : 'str default: None'
+        Label of the plot
+
     """
-    # Create the figure and a first plot
-    _generic_figure(figure_type=graph_type)
     if graph_type=='temporal_diff':
-        _generic_plot(x, y, plot_type='point')
+        _generic_plot(x, y, plot_type='point', label=label)
     else:
-        _generic_plot(x, y, plot_type='bar')
+        _generic_plot(x, y, plot_type='bar', label=label)
     # Add a title and rotate x ticks if necessary
     plt.title(title_name)
     plt.xticks(rotation=xticks_rotation)
@@ -101,19 +105,20 @@ def _generic_graph(x,y, title_name, graph_type=None, save_img_path=None, moving_
         _generic_plot(x, moving_average_y.reindex(y.index), plot_type='plot')
     else:
         pass
+    plt.legend()
     # Save the graph
     plt.savefig(f'{save_img_path}/{title_name}.png', dpi=800)
 
 
 
-def per_time_plot(df, col, save_img_path=None, moving_average=7):
+def per_time_plot(df_dict, col, save_img_path=None, moving_average=7):
     """Create a graph to look at a feature (col) over time.
 
     Parameters
     ----------
 
-    df : 'pandas DataFrame'
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
     
     col : 'str'
         Name of the column to look at
@@ -127,18 +132,21 @@ def per_time_plot(df, col, save_img_path=None, moving_average=7):
         By default, set to 7 days.
 
     """
-    _generic_graph(df.index, df[col], f'{col} per time', graph_type='temporal', save_img_path=save_img_path, moving_average=moving_average)
+    # Create the figure and a first plot
+    _generic_figure(figure_type='temporal')
+    for key, df in df_dict.items():
+        _generic_graph(df.index, df[col], f'{col} per time', graph_type='temporal', save_img_path=save_img_path, moving_average=moving_average, label=key)
 
 
 
-def per_post_plot(df, col, save_img_path=None, moving_average=7):
+def per_publication_plot(df_dict, col, save_img_path=None, moving_average=7):
     """Create a graph to look at a feature (col) over the posts.
 
     Parameters
     ----------
 
-    df : 'pandas DataFrame'
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
     
     col : 'str'
         Name of the column to look at
@@ -152,18 +160,21 @@ def per_post_plot(df, col, save_img_path=None, moving_average=7):
         By default, set to 7 posts.
 
     """
-    _generic_graph(df['post_number'], df[col], f'{col} per post', graph_type='temporal', save_img_path=save_img_path, moving_average=moving_average)
+    # Create the figure and a first plot
+    _generic_figure(figure_type='temporal')
+    for key, df in df_dict.items():
+        _generic_graph(df['publication_number'], df[col], f'{col} per publication', graph_type='temporal', save_img_path=save_img_path, moving_average=moving_average, label=key)
 
 
 
-def per_time_since_last_plot(df, col, save_img_path=None):
+def per_time_since_last_plot(df_dict, col, save_img_path=None):
     """Create a graph to look at a feature (col) over the time between the actual post and the last one.
 
     Parameters
     ----------
 
-    df : 'pandas DataFrame'
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
     
     col : 'str'
         Name of the column to look at
@@ -177,19 +188,22 @@ def per_time_since_last_plot(df, col, save_img_path=None):
         By default, set to 7 posts.
 
     """
+    # Create the figure and a first plot
+    _generic_figure(figure_type='temporal_diff')
     # Note: [1:] is to avoid the first post which have not last post
-    _generic_graph(df[1:]['time_last_post'], df[1:][col], f'{col} per time since last post', graph_type='temporal_diff', save_img_path=save_img_path)
+    for key, df in df_dict.items():
+        _generic_graph(df[1:]['time_last_publication'], df[1:][col], f'{col} per time since last publication', graph_type='temporal_diff', save_img_path=save_img_path, label=key)
 
 
 
-def corr_plot(df, col, save_img_path=None):
+def corr_plot(df_dict, col, save_img_path=None):
     """Create a graph to look at a feature (col) correlation with other columns.
 
     Parameters
     ----------
 
-    df : 'pandas DataFrame'
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
     
     col : 'str'
         Name of the column to look at
@@ -199,19 +213,22 @@ def corr_plot(df, col, save_img_path=None):
         Path to save the image
 
     """
-    corr = utility.pearson_correlation_col(df, col)
-    _generic_graph(corr.index, corr, f'{col} correlation', graph_type='correlation', save_img_path=save_img_path, xticks_rotation=90)
+    # Create the figure and a first plot
+    _generic_figure(figure_type='correlation')
+    for key, df in df_dict.items():
+        corr = utility.pearson_correlation_col(df, col)
+        _generic_graph(corr.index, corr, f'{col} correlation', graph_type='correlation', save_img_path=save_img_path, xticks_rotation=90, label=key)
 
 
 
-def per_hour_plot(df, col, save_img_path=None):
+def per_hour_plot(df_dict, col, save_img_path=None):
     """Create a graph to look at a feature (col) for each hour.
 
     Parameters
     ----------
 
-    df : 'pandas DataFrame'
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
     
     col : 'str'
         Name of the column to look at
@@ -221,19 +238,22 @@ def per_hour_plot(df, col, save_img_path=None):
         Path to save the image
 
     """
-    hourly_df = utility.by_hour(df)
-    _generic_graph(hourly_df.index, hourly_df[col], f'{col} correlation', graph_type='correlation', save_img_path=save_img_path)
+    # Create the figure and a first plot
+    _generic_figure(figure_type='correlation')
+    for key, df in df_dict.items():
+        hourly_df = utility.by_hour(df)
+        _generic_graph(hourly_df.index, hourly_df[col], f'{col} correlation', graph_type='correlation', save_img_path=save_img_path, label=key)
 
 
 
-def per_week_plot(df, col, save_img_path=None):
+def per_week_plot(df_dict, col, save_img_path=None):
     """Create a graph to look at a feature (col) for each day of the week.
 
     Parameters
     ----------
 
-    df : 'pandas DataFrame'
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
     
     col : 'str'
         Name of the column to look at
@@ -243,19 +263,22 @@ def per_week_plot(df, col, save_img_path=None):
         Path to save the image
 
     """
-    weekly_df = utility.by_day_name(df)
-    _generic_graph(weekly_df.index, weekly_df[col], f'{col} correlation', graph_type='correlation', save_img_path=save_img_path)
+    # Create the figure and a first plot
+    _generic_figure(figure_type='correlation')
+    for key, df in df_dict.items():
+        weekly_df = utility.by_day_name(df)
+        _generic_graph(weekly_df.index, weekly_df[col], f'{col} correlation', graph_type='correlation', save_img_path=save_img_path, label=key)
 
 
 
-def plot_chain(df, col, save_img_path=None, moving_average={'time':7,'post':7}):
+def plot_chain(df_dict, col, save_img_path=None, moving_average={'time':7,'post':7}):
     """Create a standard chain of graphs to look at when looking at a feature in the post data.
 
     Parameters
     ----------
 
-    df : 'pandas DataFrame'
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
     
     col : 'str'
         Name of the column to look at
@@ -270,14 +293,14 @@ def plot_chain(df, col, save_img_path=None, moving_average={'time':7,'post':7}):
 
     """
     # Plot per time
-    per_time_plot(df, col, save_img_path=save_img_path, moving_average=moving_average['time'])
+    per_time_plot(df_dict, col, save_img_path=save_img_path, moving_average=moving_average['time'])
     # Plot per post
-    per_post_plot(df, col, save_img_path=save_img_path, moving_average=moving_average['post'])
+    per_publication_plot(df_dict, col, save_img_path=save_img_path, moving_average=moving_average['post'])
     # Plot per time since last plot
-    per_time_since_last_plot(df, col, save_img_path=save_img_path)
+    per_time_since_last_plot(df_dict, col, save_img_path=save_img_path)
     # Correlation plot
-    corr_plot(df, col, save_img_path=save_img_path)
+    corr_plot(df_dict, col, save_img_path=save_img_path)
     # Hourly plot
-    per_hour_plot(df, col, save_img_path=save_img_path)
+    per_hour_plot(df_dict, col, save_img_path=save_img_path)
     # Weekly Plot
-    per_week_plot(df, col, save_img_path=save_img_path)
+    per_week_plot(df_dict, col, save_img_path=save_img_path)

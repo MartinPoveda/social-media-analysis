@@ -8,43 +8,47 @@ import pandas as pd
 
 
 
-def set_post_numero(df):
-    """Add a column in the DataFrame to set a numero number for each post.
-    The first post (sorted by date) will reveive the numero 1.
+def set_publication_numero(df_dict):
+    """Add a column in the DataFrame to set a numero number for each publication.
+    The first publication (sorted by date) will reveive the numero 1.
 
     Parameters
     ----------
     
-    df : `pandas DataFrame`
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
     
     """
-    df['post_number'] = np.arange(df.shape[0]) + 1
+    for df in df_dict.values():
+        df['publication_number'] = np.arange(df.shape[0]) + 1
 
 
 
-def count_post_length(df):
-    """Count the number of characters for each post.
+def count_content_length(df_dict):
+    """Count the number of characters for each content.
 
     Parameters
     ----------
     
-    df : `pandas DataFrame`
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
 
     """
-    df['post_length'] = df['Content'].str.len()
+    for key, df in df_dict.items():
+        if key != 'reel':
+            df['content_length'] = df['Content'].str.len()
 
 
 
-def time_since_last_post(df):
-    """Count the time between the actual and the last post.
+def time_since_last_publication(df_dict):
+    """Count the time between the actual and the last publication of that type.
 
     Parameters
     ----------
     
-    df : `pandas DataFrame`
-        Data of the posts
+    df_dict : `dict`
+        Data of different files
 
     """
-    df['time_last_post'] = df.index.to_series().diff()
+    for df in df_dict.values():
+        df['time_last_publication'] = df.index.to_series().diff()
