@@ -5,6 +5,7 @@ Module gathering utility functions such as upload functions, aggregation functio
 # Import standard libraries
 import os 
 # Import libraries for data_analysis
+import numpy as np
 import pandas as pd
 
 # Default values
@@ -96,3 +97,21 @@ def by_day_name(df, aggregation_method=lambda x: x.mean()):
         DataFrame per day of the week.
     """
     return aggregation_method(df.groupby(df.index.day_name()))
+
+
+
+def dict_to_df(df_dict, col):
+    dfs = []
+    for key, df in df_dict.items():
+        print(pd.Series(df[col], name=key))
+        dfs.append(pd.Series(df[col], name=key))
+    return pd.concat(dfs, axis=1)
+
+
+
+def numeric(df):
+    int32 = df.dtypes == np.int32
+    int64 = df.dtypes == np.int64
+    float64 = df.dtypes == np.float64
+    numeric = int32 | int64 | float64
+    return df.transpose()[numeric].transpose()

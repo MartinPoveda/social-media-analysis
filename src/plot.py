@@ -3,6 +3,7 @@ Module gathering the different plots
 """
 
 # Import librairies for Timedelta
+import numpy as np
 import pandas as pd
 # Import libraries for plotting graphs
 import matplotlib.pyplot as plt
@@ -56,6 +57,8 @@ def _generic_plot(x,y, label=None, plot_type=None):
         plt.plot(x, y)
     if plot_type=='point':
         plt.plot(x,y,'.', label=label)
+    if plot_type=='box':
+        plt.boxplot(y, labels=[label])
 
 
 
@@ -94,6 +97,8 @@ def _generic_graph(x,y, title_name, graph_type=None, save_img_path=None, moving_
     """
     if graph_type=='temporal_diff':
         _generic_plot(x, y, plot_type='point', label=label)
+    if graph_type=='box':
+        _generic_plot(x, y, plot_type='box', label=label)
     else:
         _generic_plot(x, y, plot_type='bar', label=label)
     # Add a title and rotate x ticks if necessary
@@ -268,6 +273,15 @@ def per_week_plot(df_dict, col, save_img_path=None):
     for key, df in df_dict.items():
         weekly_df = utility.by_day_name(df)
         _generic_graph(weekly_df.index, weekly_df[col], f'{col} correlation', graph_type='correlation', save_img_path=save_img_path, label=key)
+
+
+
+def mean_plot(df_dict, col, save_img_path=None):
+    # Create the figure and a first plot
+    _generic_figure(figure_type='correlation')
+    for key, df in df_dict.items():
+        numeric_df = utility.numeric(df).astype(np.float64)
+        _generic_graph(numeric_df.index, numeric_df[col], f'Mean', graph_type='box', xticks_rotation=90, save_img_path=save_img_path, label=key)
 
 
 
