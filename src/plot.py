@@ -3,10 +3,12 @@ Module gathering the different plots
 """
 
 # Import librairies for Timedelta
+import numpy as np
 import pandas as pd
 # Import libraries for plotting graphs
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
+import seaborn as sns
 # Import internal libraries
 from src import utility
 from src import variable
@@ -55,7 +57,9 @@ def _generic_plot(x,y, label=None, plot_type=None):
     if plot_type=='plot':
         plt.plot(x, y)
     if plot_type=='point':
-        plt.plot(x,y,'.', label=label)
+        plt.plot(x, y,'.', label=label)
+    if plot_type=='box':
+        sns.boxplot(data=y)
 
 
 
@@ -94,6 +98,8 @@ def _generic_graph(x,y, title_name, graph_type=None, save_img_path=None, moving_
     """
     if graph_type=='temporal_diff':
         _generic_plot(x, y, plot_type='point', label=label)
+    elif graph_type=='box':
+        _generic_plot(x, y, plot_type='box', label=label)
     else:
         _generic_plot(x, y, plot_type='bar', label=label)
     # Add a title and rotate x ticks if necessary
@@ -192,7 +198,10 @@ def per_time_since_last_plot(df_dict, col, save_img_path=None):
     _generic_figure(figure_type='temporal_diff')
     # Note: [1:] is to avoid the first post which have not last post
     for key, df in df_dict.items():
-        _generic_graph(df[1:]['time_last_publication'], df[1:][col], f'{col} per time since last publication', graph_type='temporal_diff', save_img_path=save_img_path, label=key)
+        # Tranform timedelta serie into number of days (serie of float)
+        x = df[1:]['time_last_publication'].dt.total_seconds() / variable.seconds_in_day
+        _generic_graph(x, df[1:][col], f'{col} per time since last publication',
+                       graph_type='temporal_diff', save_img_path=save_img_path, label=key)
 
 
 
@@ -268,6 +277,30 @@ def per_week_plot(df_dict, col, save_img_path=None):
     for key, df in df_dict.items():
         weekly_df = utility.by_day_name(df)
         _generic_graph(weekly_df.index, weekly_df[col], f'{col} correlation', graph_type='correlation', save_img_path=save_img_path, label=key)
+
+
+
+def mean_plot(df_dict, col, save_img_path=None):
+    """Create a graph to look at a feature (col) distribution for each dataset.
+
+    Parameters
+    ----------
+
+    df_dict : `dict`
+        Data of different files
+    
+    col : 'str'
+        Name of the column to look at
+
+
+    save_img_path : 'str default: None'
+        Path to save the image
+
+    """
+    df = utility.dict_to_df(df_dict, col)
+    # Create the figure and a first plot
+    _generic_figure(figure_type='correlation')
+    _generic_graph(df.columns, df, f'{col} distribution', graph_type='box', xticks_rotation=90, save_img_path=save_img_path)
 
 
 

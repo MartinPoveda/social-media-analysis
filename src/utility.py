@@ -5,6 +5,7 @@ Module gathering utility functions such as upload functions, aggregation functio
 # Import standard libraries
 import os 
 # Import libraries for data_analysis
+import numpy as np
 import pandas as pd
 
 # Default values
@@ -53,11 +54,11 @@ def pearson_correlation_col(df, col):
     pandas Series
         Pearson's correlation to the given column.
     """
-    return df.corr()[col].drop(col).dropna().sort_values(ascending=False)
+    return df.corr(numeric_only=True)[col].drop(col).dropna().sort_values(ascending=False)
 
 
 
-def by_hour(df, aggregation_method=lambda x: x.mean()):
+def by_hour(df, aggregation_method=lambda x: x.mean(numeric_only=True)):
     """Group the data by hours, aggregating with the method provided.
 
     Parameters
@@ -78,7 +79,7 @@ def by_hour(df, aggregation_method=lambda x: x.mean()):
 
 
 
-def by_day_name(df, aggregation_method=lambda x: x.mean()):
+def by_day_name(df, aggregation_method=lambda x: x.mean(numeric_only=True)):
     """Group the data by day name, aggregating with the method provided.
 
     Parameters
@@ -96,3 +97,30 @@ def by_day_name(df, aggregation_method=lambda x: x.mean()):
         DataFrame per day of the week.
     """
     return aggregation_method(df.groupby(df.index.day_name()))
+
+
+
+def dict_to_df(df_dict, col):
+    """Equivalent to df.xs but for a dataframe dictionnary.
+
+    Parameters
+    ----------
+
+    df_dict : `dict`
+        Data of different files
+    
+    col : 'str'
+        Name of the column to look at
+
+    Returns
+    ----------
+    pandas DataFrame
+        Dataframe with the column desired for each dataset
+    """
+    dfs = []
+    for key, df in df_dict.items():
+        # Create a dataframe with the column desired (renamed by the name of the dataset)
+        dfs.append(pd.DataFrame(np.array([df[col]]).transpose(), index=df.index, columns=[key]))
+    result = pd.concat(dfs)
+    result.sort_index(inplace=True)
+    return result
