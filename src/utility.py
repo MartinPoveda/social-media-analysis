@@ -54,11 +54,11 @@ def pearson_correlation_col(df, col):
     pandas Series
         Pearson's correlation to the given column.
     """
-    return df.corr()[col].drop(col).dropna().sort_values(ascending=False)
+    return df.corr(numeric_only=True)[col].drop(col).dropna().sort_values(ascending=False)
 
 
 
-def by_hour(df, aggregation_method=lambda x: x.mean()):
+def by_hour(df, aggregation_method=lambda x: x.mean(numeric_only=True)):
     """Group the data by hours, aggregating with the method provided.
 
     Parameters
@@ -79,7 +79,7 @@ def by_hour(df, aggregation_method=lambda x: x.mean()):
 
 
 
-def by_day_name(df, aggregation_method=lambda x: x.mean()):
+def by_day_name(df, aggregation_method=lambda x: x.mean(numeric_only=True)):
     """Group the data by day name, aggregating with the method provided.
 
     Parameters
@@ -101,17 +101,26 @@ def by_day_name(df, aggregation_method=lambda x: x.mean()):
 
 
 def dict_to_df(df_dict, col):
+    """Equivalent to df.xs but for a dataframe dictionnary.
+
+    Parameters
+    ----------
+
+    df_dict : `dict`
+        Data of different files
+    
+    col : 'str'
+        Name of the column to look at
+
+    Returns
+    ----------
+    pandas DataFrame
+        Dataframe with the column desired for each dataset
+    """
     dfs = []
     for key, df in df_dict.items():
-        print(pd.Series(df[col], name=key))
-        dfs.append(pd.Series(df[col], name=key))
-    return pd.concat(dfs, axis=1)
-
-
-
-def numeric(df):
-    int32 = df.dtypes == np.int32
-    int64 = df.dtypes == np.int64
-    float64 = df.dtypes == np.float64
-    numeric = int32 | int64 | float64
-    return df.transpose()[numeric].transpose()
+        # Create a dataframe with the column desired (renamed by the name of the dataset)
+        dfs.append(pd.DataFrame(np.array([df[col]]).transpose(), index=df.index, columns=[key]))
+    result = pd.concat(dfs)
+    result.sort_index(inplace=True)
+    return result
