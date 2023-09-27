@@ -54,7 +54,7 @@ def pearson_correlation_col(df, col):
     pandas Series
         Pearson's correlation to the given column.
     """
-    return df.corr(numeric_only=True)[col].drop(col).dropna().sort_values(ascending=False)
+    return df.corr()[col].drop(col).dropna().sort_values(ascending=False)
 
 
 

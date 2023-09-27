@@ -5,6 +5,8 @@ Module for adding features to the data
 # Import libraries for data_analysis
 import numpy as np
 import pandas as pd
+# Import libraries for emojis
+import emoji
 
 
 
@@ -52,3 +54,35 @@ def time_since_last_publication(df_dict):
     """
     for df in df_dict.values():
         df['time_last_publication'] = df.index.to_series().diff()
+
+
+
+def count_hashtags(df_dict):
+    """Count the number of hashtags for each content.
+
+    Parameters
+    ----------
+    
+    df_dict : `dict`
+        Data of different files
+
+    """
+    for key, df in df_dict.items():
+        if key != 'reel':
+            df['hashtags_number'] = df['Content'].str.count('#')
+
+
+
+def count_emojis(df_dict):
+    """Count the number of emojis for each content.
+
+    Parameters
+    ----------
+    
+    df_dict : `dict`
+        Data of different files
+
+    """
+    for key, df in df_dict.items():
+        if key != 'reel':
+            df['emojis_number'] = df['Content'].dropna().map(emoji.emoji_count).reindex(df.index)
